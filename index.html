@@ -26,6 +26,9 @@
     .hidden { display:none !important; }
     .error { color:#b42318; margin-top:10px; }
     .success { color:#067647; margin-top:10px; }
+    .tabs { display:flex; gap:8px; margin-bottom:18px; }
+    .tabs button { flex:1; background:#eef2ff; color:#2446a8; }
+    .tabs button.active { background:#1f5eff; color:white; }
     table { width:100%; border-collapse:collapse; }
     th, td { padding:10px; border-bottom:1px solid #eceff4; text-align:right; vertical-align:top; }
     .scroll { overflow:auto; }
@@ -35,15 +38,27 @@
 </head>
 <body>
   <main class="wrap">
-    <section id="loginCard" class="card">
-      <h1>ورود به تایم‌شیت</h1>
-      <p class="muted">نام کاربری و رمز عبور خود را وارد کنید.</p>
+    <section id="authCard" class="card">
+      <h1>تایم‌شیت تیم</h1>
+      <div class="tabs">
+        <button id="loginTab" type="button" class="active">ورود</button>
+        <button id="signupTab" type="button">ثبت‌نام</button>
+      </div>
+
       <form id="loginForm" class="grid">
-        <label>نام کاربری<input id="username" autocomplete="username" required /></label>
-        <label>رمز عبور<input id="password" type="password" autocomplete="current-password" required /></label>
+        <label>نام کاربری<input id="username" autocomplete="username" minlength="3" maxlength="30" required /></label>
+        <label>رمز عبور<input id="password" type="password" autocomplete="current-password" minlength="8" required /></label>
         <div><button type="submit">ورود</button></div>
       </form>
-      <div id="loginMessage"></div>
+
+      <form id="signupForm" class="grid hidden">
+        <label>نام کاربری<input id="signupUsername" autocomplete="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]+" required /></label>
+        <label>رمز عبور<input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
+        <label>تکرار رمز عبور<input id="signupPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
+        <div><button type="submit">ساخت حساب</button></div>
+      </form>
+      <p class="muted">نام کاربری فقط می‌تواند شامل حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط باشد.</p>
+      <div id="authMessage"></div>
     </section>
 
     <section id="app" class="hidden">
@@ -84,25 +99,59 @@
   const SUPABASE_URL = 'YOUR_SUPABASE_URL';
   const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let currentProfile = null;
   let currentEntries = [];
 
   const $ = (id) => document.getElementById(id);
   const showMessage = (el, text, ok=false) => { el.textContent = text; el.className = ok ? 'success' : 'error'; };
-  const syntheticEmail = (username) => `${username.trim().toLowerCase()}@timesheet.local`;
+  const normalizeUsername = (value) => value.trim().toLowerCase();
+  const validUsername = (value) => /^[a-z0-9._-]{3,30}$/.test(normalizeUsername(value));
+  const syntheticEmail = (username) => `${normalizeUsername(username)}@timesheet.local`;
   const minutesBetween = (start, end) => {
     const [sh, sm] = start.split(':').map(Number), [eh, em] = end.split(':').map(Number);
     return (eh * 60 + em) - (sh * 60 + sm);
   };
   const formatDuration = (minutes) => `${Math.floor(minutes/60)}:${String(minutes%60).padStart(2,'0')}`;
+  const setAuthMode = (mode) => {
+    const login = mode === 'login';
+    $('loginForm').classList.toggle('hidden', !login);
+    $('signupForm').classList.toggle('hidden', login);
+    $('loginTab').classList.toggle('active', login);
+    $('signupTab').classList.toggle('active', !login);
+    $('authMessage').textContent = '';
+  };
 
   $('workDate').valueAsDate = new Date();
+  $('loginTab').addEventListener('click', () => setAuthMode('login'));
+  $('signupTab').addEventListener('click', () => setAuthMode('signup'));
+
+  $('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = normalizeUsername($('signupUsername').value);
+    const password = $('signupPassword').value;
+    const confirm = $('signupPasswordConfirm').value;
+    if (!validUsername(username)) return showMessage($('authMessage'), 'نام کاربری معتبر نیست.');
+    if (password !== confirm) return showMessage($('authMessage'), 'تکرار رمز عبور یکسان نیست.');
+    showMessage($('authMessage'), 'در حال ساخت حساب...', true);
+    const { data, error } = await sb.auth.signUp({ email: syntheticEmail(username), password });
+    if (error) {
+      if (/already registered|already exists/i.test(error.message)) return showMessage($('authMessage'), 'این نام کاربری قبلاً ثبت شده است.');
+      return showMessage($('authMessage'), error.message);
+    }
+    if (data.session) {
+      await boot();
+    } else {
+      showMessage($('authMessage'), 'حساب ساخته شد. اگر تأیید ایمیل در Supabase روشن است، آن را خاموش کنید و دوباره وارد شوید.', true);
+      setAuthMode('login');
+      $('username').value = username;
+    }
+  });
 
   $('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    showMessage($('loginMessage'), 'در حال ورود...', true);
+    if (!validUsername($('username').value)) return showMessage($('authMessage'), 'نام کاربری معتبر نیست.');
+    showMessage($('authMessage'), 'در حال ورود...', true);
     const { error } = await sb.auth.signInWithPassword({ email: syntheticEmail($('username').value), password: $('password').value });
-    if (error) return showMessage($('loginMessage'), 'نام کاربری یا رمز عبور نادرست است.');
+    if (error) return showMessage($('authMessage'), 'نام کاربری یا رمز عبور نادرست است.');
     await boot();
   });
 
@@ -139,11 +188,10 @@
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
     const { data, error } = await sb.from('profiles').select('username, role').eq('id', user.id).single();
-    if (error) return showMessage($('loginMessage'), 'پروفایل کاربر پیدا نشد.');
-    currentProfile = data;
+    if (error) return showMessage($('authMessage'), 'پروفایل کاربر پیدا نشد.');
     $('welcome').textContent = `سلام ${data.username}`;
     $('roleBadge').textContent = data.role === 'admin' ? 'مدیر' : 'عضو تیم';
-    $('loginCard').classList.add('hidden'); $('app').classList.remove('hidden');
+    $('authCard').classList.add('hidden'); $('app').classList.remove('hidden');
     await loadEntries();
   }
 
