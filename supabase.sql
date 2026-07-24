@@ -1,10 +1,11 @@
 create extension if not exists pgcrypto;
 
-create type public.user_role as enum ('member', 'admin');
+create type public.user_role as enum ('member', 'manager', 'admin');
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  username text unique not null,
+  full_name text not null,
+  email text unique not null,
   role public.user_role not null default 'member',
   created_at timestamptz not null default now()
 );
@@ -29,8 +30,13 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, username)
-  values (new.id, split_part(new.email, '@', 1));
+  insert into public.profiles (id, full_name, email, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    lower(new.email),
+    case when lower(new.email) = 'admin@linkotech.com' then 'admin'::public.user_role else 'member'::public.user_role end
+  );
   return new;
 end;
 $$;
@@ -42,19 +48,27 @@ for each row execute procedure public.handle_new_user();
 alter table public.profiles enable row level security;
 alter table public.time_entries enable row level security;
 
-create policy "users can read own profile"
+create policy "users can read allowed profiles"
 on public.profiles for select
 to authenticated
-using (id = auth.uid() or exists (
-  select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-));
+using (
+  id = auth.uid()
+  or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('manager','admin'))
+);
+
+create policy "admins can change roles"
+on public.profiles for update
+to authenticated
+using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
+with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
 create policy "users can read allowed entries"
 on public.time_entries for select
 to authenticated
-using (user_id = auth.uid() or exists (
-  select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
-));
+using (
+  user_id = auth.uid()
+  or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('manager','admin'))
+);
 
 create policy "users can create own entries"
 on public.time_entries for insert
@@ -72,5 +86,6 @@ on public.time_entries for delete
 to authenticated
 using (user_id = auth.uid());
 
--- After creating your admin user in Supabase Authentication, promote it once:
--- update public.profiles set role = 'admin' where username = 'your_admin_username';
+-- The first account registered with admin@linkotech.com becomes Admin automatically.
+-- All other new accounts start as Employee (member).
+-- Admins can promote users to Manager or Admin from the application.
