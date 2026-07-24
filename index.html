@@ -1,25 +1,25 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Timesheet</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>LinkoTech Timesheet</title>
   <style>
-    :root { font-family: system-ui, sans-serif; color: #172033; background: #f6f7fb; }
-    * { box-sizing: border-box; }
-    body { margin: 0; }
-    .wrap { width: min(980px, 92vw); margin: 40px auto; }
-    .card { background: white; border: 1px solid #e6e8ef; border-radius: 16px; padding: 20px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(20,30,55,.06); }
-    h1,h2 { margin-top: 0; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
-    label { display: grid; gap: 7px; font-weight: 600; }
-    input, textarea, button { font: inherit; }
-    input, textarea { width: 100%; border: 1px solid #cfd5e2; border-radius: 10px; padding: 11px 12px; background: #fff; }
-    textarea { min-height: 100px; resize: vertical; }
-    button { border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; background: #1f5eff; color: white; font-weight: 700; }
-    button.secondary { background: #eef2ff; color: #2446a8; }
-    button.danger { background: #fff0f0; color: #b42318; }
+    :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color:#152033; background:#f5f7fb; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    .wrap { width:min(1080px,92vw); margin:32px auto; }
+    .card { background:#fff; border:1px solid #e6eaf1; border-radius:18px; padding:22px; margin-bottom:18px; box-shadow:0 10px 30px rgba(20,30,55,.06); }
+    h1,h2,h3 { margin-top:0; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    label { display:grid; gap:7px; font-weight:650; }
+    input,textarea,select,button { font:inherit; }
+    input,textarea,select { width:100%; border:1px solid #ccd3df; border-radius:10px; padding:11px 12px; background:#fff; }
+    textarea { min-height:110px; resize:vertical; }
+    button { border:0; border-radius:10px; padding:11px 16px; cursor:pointer; background:#225cff; color:#fff; font-weight:750; }
+    button.secondary { background:#edf2ff; color:#2448a5; }
+    button.ghost { background:#f4f5f7; color:#344054; }
+    button.danger { background:#fff0f0; color:#b42318; }
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .between { justify-content:space-between; }
     .muted { color:#667085; }
@@ -27,185 +27,120 @@
     .error { color:#b42318; margin-top:10px; }
     .success { color:#067647; margin-top:10px; }
     .tabs { display:flex; gap:8px; margin-bottom:18px; }
-    .tabs button { flex:1; background:#eef2ff; color:#2446a8; }
-    .tabs button.active { background:#1f5eff; color:white; }
+    .tabs button { flex:1; background:#edf2ff; color:#2448a5; }
+    .tabs button.active { background:#225cff; color:#fff; }
+    .badge { background:#edf2ff; color:#2949a7; border-radius:999px; padding:4px 9px; font-size:.85rem; }
+    .demo { border:1px dashed #9eb4ff; background:#f8faff; }
+    .notice { padding:12px 14px; border-radius:10px; background:#fff7e6; color:#7a4b00; margin-bottom:14px; }
     table { width:100%; border-collapse:collapse; }
-    th, td { padding:10px; border-bottom:1px solid #eceff4; text-align:right; vertical-align:top; }
+    th,td { padding:10px; border-bottom:1px solid #eceff4; text-align:left; vertical-align:top; }
     .scroll { overflow:auto; }
-    .badge { background:#eef2ff; color:#2949a7; border-radius:999px; padding:4px 9px; font-size:.85rem; }
-    @media (max-width: 680px) { .grid { grid-template-columns:1fr; } .wrap { margin:20px auto; } }
+    .role-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    @media (max-width:720px){ .grid,.role-grid{grid-template-columns:1fr}.wrap{margin:18px auto} }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <section id="authCard" class="card">
-      <h1>تایم‌شیت تیم</h1>
-      <div class="tabs">
-        <button id="loginTab" type="button" class="active">ورود</button>
-        <button id="signupTab" type="button">ثبت‌نام</button>
-      </div>
+<main class="wrap">
+  <section id="authCard" class="card">
+    <h1>LinkoTech Timesheet</h1>
+    <p class="muted">Preview mode is active. Supabase is not required yet.</p>
+    <div class="notice">Use a demo account below to preview each access level.</div>
+    <div class="role-grid demo card">
+      <button type="button" onclick="demoLogin('member')">Preview as Employee</button>
+      <button type="button" onclick="demoLogin('manager')">Preview as Manager</button>
+      <button type="button" onclick="demoLogin('admin')">Preview as Admin</button>
+    </div>
+    <div class="tabs">
+      <button id="loginTab" type="button" class="active">Sign in</button>
+      <button id="signupTab" type="button">Sign up</button>
+    </div>
+    <form id="loginForm" class="grid">
+      <label>Email<input id="loginEmail" type="email" autocomplete="email" required /></label>
+      <label>Password<input id="loginPassword" type="password" minlength="8" required /></label>
+      <div><button type="submit">Sign in</button></div>
+    </form>
+    <form id="signupForm" class="grid hidden">
+      <label>Full name<input id="signupName" required /></label>
+      <label>Email<input id="signupEmail" type="email" autocomplete="email" required /></label>
+      <label>Password<input id="signupPassword" type="password" minlength="8" required /></label>
+      <label>Confirm password<input id="signupConfirm" type="password" minlength="8" required /></label>
+      <div><button type="submit">Create account</button></div>
+    </form>
+    <p class="muted">New accounts always start as Employee. Only an Admin can change roles.</p>
+    <div id="authMessage"></div>
+  </section>
 
-      <form id="loginForm" class="grid">
-        <label>نام کاربری<input id="username" autocomplete="username" minlength="3" maxlength="30" required /></label>
-        <label>رمز عبور<input id="password" type="password" autocomplete="current-password" minlength="8" required /></label>
-        <div><button type="submit">ورود</button></div>
-      </form>
+  <section id="app" class="hidden">
+    <div class="card row between">
+      <div><strong id="welcome"></strong> <span id="roleBadge" class="badge"></span></div>
+      <button id="logoutBtn" class="danger">Sign out</button>
+    </div>
 
-      <form id="signupForm" class="grid hidden">
-        <label>نام کاربری<input id="signupUsername" autocomplete="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]+" required /></label>
-        <label>رمز عبور<input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
-        <label>تکرار رمز عبور<input id="signupPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
-        <div><button type="submit">ساخت حساب</button></div>
+    <section class="card">
+      <h2>Log work</h2>
+      <form id="entryForm">
+        <div class="grid">
+          <label>Work date<input id="workDate" type="date" required /></label><span></span>
+          <label>Start time<input id="startTime" type="time" required /></label>
+          <label>End time<input id="endTime" type="time" required /></label>
+        </div>
+        <label style="margin-top:14px">Work description<textarea id="description" maxlength="1200" required placeholder="What did you work on?"></textarea></label>
+        <div class="row" style="margin-top:14px"><button type="submit">Save entry</button><span id="entryMessage"></span></div>
       </form>
-      <p class="muted">نام کاربری فقط می‌تواند شامل حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط باشد.</p>
-      <div id="authMessage"></div>
     </section>
 
-    <section id="app" class="hidden">
-      <div class="card row between">
-        <div><strong id="welcome"></strong> <span id="roleBadge" class="badge"></span></div>
-        <button id="logoutBtn" class="danger">خروج</button>
+    <section class="card">
+      <div class="row between">
+        <div><h2 style="margin-bottom:4px">Timesheet report</h2><span id="totalHours" class="muted"></span></div>
+        <button id="exportBtn" class="secondary">Export CSV</button>
       </div>
-
-      <section class="card">
-        <h2>ثبت ساعت کاری</h2>
-        <form id="entryForm">
-          <div class="grid">
-            <label>تاریخ<input id="workDate" type="date" required /></label>
-            <span></span>
-            <label>ساعت شروع<input id="startTime" type="time" required /></label>
-            <label>ساعت پایان<input id="endTime" type="time" required /></label>
-          </div>
-          <label style="margin-top:14px">شرح کار<textarea id="description" maxlength="1200" required placeholder="دقیقاً چه کاری انجام شد؟"></textarea></label>
-          <div class="row" style="margin-top:14px"><button type="submit">ثبت تایم</button><span id="entryMessage"></span></div>
-        </form>
-      </section>
-
-      <section class="card">
-        <div class="row between">
-          <div><h2 style="margin-bottom:4px">گزارش ساعت‌ها</h2><span id="totalHours" class="muted"></span></div>
-          <button id="exportBtn" class="secondary">خروجی CSV</button>
-        </div>
-        <div class="scroll">
-          <table>
-            <thead><tr><th>کاربر</th><th>تاریخ</th><th>شروع</th><th>پایان</th><th>مدت</th><th>شرح کار</th></tr></thead>
-            <tbody id="entriesBody"></tbody>
-          </table>
-        </div>
-      </section>
+      <div class="scroll"><table><thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Duration</th><th>Description</th></tr></thead><tbody id="entriesBody"></tbody></table></div>
     </section>
-  </main>
+
+    <section id="adminPanel" class="card hidden">
+      <h2>User access</h2>
+      <p class="muted">Admins can promote or demote users. Managers can view reports but cannot change access.</p>
+      <div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+    </section>
+  </section>
+</main>
 <script>
-  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let currentEntries = [];
+  const users = [
+    {id:'u1',name:'LinkoTech Admin',email:'admin@linkotech.com',role:'admin'},
+    {id:'u2',name:'Maya Chen',email:'maya@linkotech.com',role:'manager'},
+    {id:'u3',name:'Alex Morgan',email:'alex@linkotech.com',role:'member'}
+  ];
+  let entries = [
+    {id:'e1',userId:'u3',workDate:'2026-07-24',start:'09:00',end:'12:30',minutes:210,description:'Customer discovery interviews'},
+    {id:'e2',userId:'u2',workDate:'2026-07-24',start:'10:00',end:'15:00',minutes:300,description:'Reviewed onboarding workflow'}
+  ];
+  let currentUser = null;
+  const $ = id => document.getElementById(id);
+  const showMessage=(el,text,ok=false)=>{el.textContent=text;el.className=ok?'success':'error'};
+  const setAuthMode=mode=>{const login=mode==='login';$('loginForm').classList.toggle('hidden',!login);$('signupForm').classList.toggle('hidden',login);$('loginTab').classList.toggle('active',login);$('signupTab').classList.toggle('active',!login);$('authMessage').textContent=''};
+  const minutesBetween=(s,e)=>{const [sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);return eh*60+em-(sh*60+sm)};
+  const formatDuration=m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;
+  const escapeHtml=v=>{const d=document.createElement('div');d.textContent=v??'';return d.innerHTML};
 
-  const $ = (id) => document.getElementById(id);
-  const showMessage = (el, text, ok=false) => { el.textContent = text; el.className = ok ? 'success' : 'error'; };
-  const normalizeUsername = (value) => value.trim().toLowerCase();
-  const validUsername = (value) => /^[a-z0-9._-]{3,30}$/.test(normalizeUsername(value));
-  const syntheticEmail = (username) => `${normalizeUsername(username)}@timesheet.local`;
-  const minutesBetween = (start, end) => {
-    const [sh, sm] = start.split(':').map(Number), [eh, em] = end.split(':').map(Number);
-    return (eh * 60 + em) - (sh * 60 + sm);
-  };
-  const formatDuration = (minutes) => `${Math.floor(minutes/60)}:${String(minutes%60).padStart(2,'0')}`;
-  const setAuthMode = (mode) => {
-    const login = mode === 'login';
-    $('loginForm').classList.toggle('hidden', !login);
-    $('signupForm').classList.toggle('hidden', login);
-    $('loginTab').classList.toggle('active', login);
-    $('signupTab').classList.toggle('active', !login);
-    $('authMessage').textContent = '';
-  };
+  $('workDate').valueAsDate=new Date();
+  $('loginTab').onclick=()=>setAuthMode('login');
+  $('signupTab').onclick=()=>setAuthMode('signup');
+  $('logoutBtn').onclick=()=>{currentUser=null;location.reload()};
 
-  $('workDate').valueAsDate = new Date();
-  $('loginTab').addEventListener('click', () => setAuthMode('login'));
-  $('signupTab').addEventListener('click', () => setAuthMode('signup'));
+  function demoLogin(role){ currentUser=users.find(u=>u.role===role); boot(); }
 
-  $('signupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = normalizeUsername($('signupUsername').value);
-    const password = $('signupPassword').value;
-    const confirm = $('signupPasswordConfirm').value;
-    if (!validUsername(username)) return showMessage($('authMessage'), 'نام کاربری معتبر نیست.');
-    if (password !== confirm) return showMessage($('authMessage'), 'تکرار رمز عبور یکسان نیست.');
-    showMessage($('authMessage'), 'در حال ساخت حساب...', true);
-    const { data, error } = await sb.auth.signUp({ email: syntheticEmail(username), password });
-    if (error) {
-      if (/already registered|already exists/i.test(error.message)) return showMessage($('authMessage'), 'این نام کاربری قبلاً ثبت شده است.');
-      return showMessage($('authMessage'), error.message);
-    }
-    if (data.session) {
-      await boot();
-    } else {
-      showMessage($('authMessage'), 'حساب ساخته شد. اگر تأیید ایمیل در Supabase روشن است، آن را خاموش کنید و دوباره وارد شوید.', true);
-      setAuthMode('login');
-      $('username').value = username;
-    }
-  });
+  $('loginForm').onsubmit=e=>{e.preventDefault();const email=$('loginEmail').value.trim().toLowerCase();currentUser=users.find(u=>u.email===email)||users[2];boot()};
+  $('signupForm').onsubmit=e=>{e.preventDefault();if($('signupPassword').value!==$('signupConfirm').value)return showMessage($('authMessage'),'Passwords do not match.');const email=$('signupEmail').value.trim().toLowerCase();if(users.some(u=>u.email===email))return showMessage($('authMessage'),'This email is already registered.');currentUser={id:`u${Date.now()}`,name:$('signupName').value.trim(),email,role:'member'};users.push(currentUser);showMessage($('authMessage'),'Account created as Employee.',true);boot()};
 
-  $('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!validUsername($('username').value)) return showMessage($('authMessage'), 'نام کاربری معتبر نیست.');
-    showMessage($('authMessage'), 'در حال ورود...', true);
-    const { error } = await sb.auth.signInWithPassword({ email: syntheticEmail($('username').value), password: $('password').value });
-    if (error) return showMessage($('authMessage'), 'نام کاربری یا رمز عبور نادرست است.');
-    await boot();
-  });
+  $('entryForm').onsubmit=e=>{e.preventDefault();const start=$('startTime').value,end=$('endTime').value,minutes=minutesBetween(start,end);if(minutes<=0)return showMessage($('entryMessage'),'End time must be after start time.');entries.unshift({id:`e${Date.now()}`,userId:currentUser.id,workDate:$('workDate').value,start,end,minutes,description:$('description').value.trim()});$('description').value='';showMessage($('entryMessage'),'Saved.',true);renderEntries()};
 
-  $('logoutBtn').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+  $('exportBtn').onclick=()=>{const visible=getVisibleEntries();const rows=[['employee','email','date','start','end','duration_minutes','description'],...visible.map(x=>{const u=users.find(v=>v.id===x.userId)||{};return[u.name,u.email,x.workDate,x.start,x.end,x.minutes,x.description]})];const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='linkotech-timesheet.csv';a.click();URL.revokeObjectURL(url)};
 
-  $('entryForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const start = $('startTime').value, end = $('endTime').value;
-    const duration = minutesBetween(start, end);
-    if (duration <= 0) return showMessage($('entryMessage'), 'ساعت پایان باید بعد از ساعت شروع باشد.');
-    const { data: { user } } = await sb.auth.getUser();
-    const { error } = await sb.from('time_entries').insert({
-      user_id: user.id,
-      work_date: $('workDate').value,
-      start_time: start,
-      end_time: end,
-      duration_minutes: duration,
-      description: $('description').value.trim()
-    });
-    if (error) return showMessage($('entryMessage'), error.message);
-    showMessage($('entryMessage'), 'ثبت شد.', true);
-    $('description').value = '';
-    await loadEntries();
-  });
-
-  $('exportBtn').addEventListener('click', () => {
-    const rows = [['username','date','start','end','duration_minutes','description'], ...currentEntries.map(x => [x.profiles?.username || '', x.work_date, x.start_time, x.end_time, x.duration_minutes, x.description])];
-    const csv = rows.map(r => r.map(v => `"${String(v ?? '').replaceAll('"','""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
-    const a = document.createElement('a'); a.href = url; a.download = `timesheet-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-  });
-
-  async function boot() {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    const { data, error } = await sb.from('profiles').select('username, role').eq('id', user.id).single();
-    if (error) return showMessage($('authMessage'), 'پروفایل کاربر پیدا نشد.');
-    $('welcome').textContent = `سلام ${data.username}`;
-    $('roleBadge').textContent = data.role === 'admin' ? 'مدیر' : 'عضو تیم';
-    $('authCard').classList.add('hidden'); $('app').classList.remove('hidden');
-    await loadEntries();
-  }
-
-  async function loadEntries() {
-    const { data, error } = await sb.from('time_entries').select('id, work_date, start_time, end_time, duration_minutes, description, profiles(username)').order('work_date', {ascending:false}).order('start_time', {ascending:false});
-    if (error) return alert(error.message);
-    currentEntries = data || [];
-    $('entriesBody').innerHTML = currentEntries.map(x => `<tr><td>${escapeHtml(x.profiles?.username || '')}</td><td>${x.work_date}</td><td>${x.start_time.slice(0,5)}</td><td>${x.end_time.slice(0,5)}</td><td>${formatDuration(x.duration_minutes)}</td><td>${escapeHtml(x.description)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">هنوز رکوردی ثبت نشده.</td></tr>';
-    const total = currentEntries.reduce((sum,x)=>sum+x.duration_minutes,0);
-    $('totalHours').textContent = `مجموع: ${formatDuration(total)} ساعت`;
-  }
-
-  function escapeHtml(value) { const d=document.createElement('div'); d.textContent=value ?? ''; return d.innerHTML; }
-  sb.auth.getSession().then(({data}) => { if (data.session) boot(); });
+  function boot(){ $('authCard').classList.add('hidden');$('app').classList.remove('hidden');$('welcome').textContent=`Welcome, ${currentUser.name}`;$('roleBadge').textContent=currentUser.role==='member'?'Employee':currentUser.role[0].toUpperCase()+currentUser.role.slice(1);$('adminPanel').classList.toggle('hidden',currentUser.role!=='admin');renderEntries();renderUsers(); }
+  function getVisibleEntries(){return currentUser.role==='member'?entries.filter(x=>x.userId===currentUser.id):entries}
+  function renderEntries(){const visible=getVisibleEntries();$('entriesBody').innerHTML=visible.map(x=>{const u=users.find(v=>v.id===x.userId)||{};return`<tr><td>${escapeHtml(u.name)}</td><td>${x.workDate}</td><td>${x.start}</td><td>${x.end}</td><td>${formatDuration(x.minutes)}</td><td>${escapeHtml(x.description)}</td></tr>`}).join('')||'<tr><td colspan="6" class="muted">No entries yet.</td></tr>';$('totalHours').textContent=`Total: ${formatDuration(visible.reduce((s,x)=>s+x.minutes,0))}`}
+  function renderUsers(){if(currentUser.role!=='admin')return;$('usersBody').innerHTML=users.map(u=>`<tr><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td><td><select onchange="changeRole('${u.id}',this.value)" ${u.email==='admin@linkotech.com'?'disabled':''}><option value="member" ${u.role==='member'?'selected':''}>Employee</option><option value="manager" ${u.role==='manager'?'selected':''}>Manager</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option></select></td></tr>`).join('')}
+  function changeRole(id,role){const user=users.find(u=>u.id===id);if(user)user.role=role;renderUsers()}
 </script>
 </body>
 </html>
