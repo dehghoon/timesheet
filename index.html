@@ -4,193 +4,46 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LinkoTech Timesheet</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color:#152033; background:#f5f7fb; }
-    * { box-sizing:border-box; }
-    body { margin:0; }
-    .wrap { width:min(1120px,92vw); margin:32px auto; }
-    .card { background:#fff; border:1px solid #e6eaf1; border-radius:18px; padding:22px; margin-bottom:18px; box-shadow:0 10px 30px rgba(20,30,55,.06); }
-    h1,h2,h3 { margin-top:0; }
-    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-    .filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; align-items:end; margin:16px 0; }
-    .summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
-    .summary-card { border:1px solid #e6eaf1; border-radius:14px; padding:16px; background:#fafbff; }
-    .summary-card strong { display:block; font-size:1.25rem; margin-top:6px; }
-    label { display:grid; gap:7px; font-weight:650; }
-    input,textarea,select,button { font:inherit; }
-    input,textarea,select { width:100%; border:1px solid #ccd3df; border-radius:10px; padding:11px 12px; background:#fff; }
-    textarea { min-height:110px; resize:vertical; }
-    button { border:0; border-radius:10px; padding:11px 16px; cursor:pointer; background:#225cff; color:#fff; font-weight:750; }
-    button.secondary { background:#edf2ff; color:#2448a5; }
-    button.ghost { background:#f4f5f7; color:#344054; }
-    button.danger { background:#fff0f0; color:#b42318; }
-    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .between { justify-content:space-between; }
-    .muted { color:#667085; }
-    .hidden { display:none !important; }
-    .error { color:#b42318; margin-top:10px; }
-    .success { color:#067647; margin-top:10px; }
-    .tabs { display:flex; gap:8px; margin-bottom:18px; }
-    .tabs button { flex:1; background:#edf2ff; color:#2448a5; }
-    .tabs button.active { background:#225cff; color:#fff; }
-    .badge { background:#edf2ff; color:#2949a7; border-radius:999px; padding:4px 9px; font-size:.85rem; }
-    .demo { border:1px dashed #9eb4ff; background:#f8faff; }
-    .notice { padding:12px 14px; border-radius:10px; background:#fff7e6; color:#7a4b00; margin-bottom:14px; }
-    table { width:100%; border-collapse:collapse; }
-    th,td { padding:10px; border-bottom:1px solid #eceff4; text-align:left; vertical-align:top; }
-    .scroll { overflow:auto; }
-    .role-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-    @media (max-width:820px){ .filters,.summary-grid,.grid,.role-grid{grid-template-columns:1fr}.wrap{margin:18px auto} }
+    :root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#152033;background:#f5f7fb}*{box-sizing:border-box}body{margin:0}.wrap{width:min(1120px,92vw);margin:32px auto}.card{background:#fff;border:1px solid #e6eaf1;border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:0 10px 30px rgba(20,30,55,.06)}h1,h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end;margin:16px 0}.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}.summary-card{border:1px solid #e6eaf1;border-radius:14px;padding:16px;background:#fafbff}.summary-card strong{display:block;font-size:1.25rem;margin-top:6px}label{display:grid;gap:7px;font-weight:650}input,textarea,select,button{font:inherit}input,textarea,select{width:100%;border:1px solid #ccd3df;border-radius:10px;padding:11px 12px;background:#fff}textarea{min-height:110px;resize:vertical}button{border:0;border-radius:10px;padding:11px 16px;cursor:pointer;background:#225cff;color:#fff;font-weight:750}button.secondary{background:#edf2ff;color:#2448a5}button.ghost{background:#f4f5f7;color:#344054}button.danger{background:#fff0f0;color:#b42318}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.muted{color:#667085}.hidden{display:none!important}.error{color:#b42318;margin-top:10px}.success{color:#067647;margin-top:10px}.tabs{display:flex;gap:8px;margin-bottom:18px}.tabs button{flex:1;background:#edf2ff;color:#2448a5}.tabs button.active{background:#225cff;color:#fff}.badge{background:#edf2ff;color:#2949a7;border-radius:999px;padding:4px 9px;font-size:.85rem}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #eceff4;text-align:left;vertical-align:top}.scroll{overflow:auto}.notice{padding:12px 14px;border-radius:10px;background:#fff7e6;color:#7a4b00;margin-bottom:14px}@media(max-width:820px){.filters,.summary-grid,.grid{grid-template-columns:1fr}.wrap{margin:18px auto}}
   </style>
 </head>
 <body>
 <main class="wrap">
-  <section id="authCard" class="card">
+  <section id="loadingCard" class="card"><h1>LinkoTech Timesheet</h1><p class="muted">Connecting securely…</p></section>
+  <section id="authCard" class="card hidden">
     <h1>LinkoTech Timesheet</h1>
-    <p class="muted">Preview mode is active. Supabase is not required yet.</p>
-    <div class="notice">Use a demo account below to preview each access level.</div>
-    <div class="role-grid demo card">
-      <button type="button" onclick="demoLogin('member')">Preview as Employee</button>
-      <button type="button" onclick="demoLogin('manager')">Preview as Manager</button>
-      <button type="button" onclick="demoLogin('admin')">Preview as Admin</button>
-    </div>
-    <div class="tabs">
-      <button id="loginTab" type="button" class="active">Sign in</button>
-      <button id="signupTab" type="button">Sign up</button>
-    </div>
-    <form id="loginForm" class="grid">
-      <label>Email<input id="loginEmail" type="email" autocomplete="email" required /></label>
-      <label>Password<input id="loginPassword" type="password" minlength="8" required /></label>
-      <div><button type="submit">Sign in</button></div>
-    </form>
-    <form id="signupForm" class="grid hidden">
-      <label>Full name<input id="signupName" required /></label>
-      <label>Email<input id="signupEmail" type="email" autocomplete="email" required /></label>
-      <label>Password<input id="signupPassword" type="password" minlength="8" required /></label>
-      <label>Confirm password<input id="signupConfirm" type="password" minlength="8" required /></label>
-      <div><button type="submit">Create account</button></div>
-    </form>
-    <p class="muted">New accounts always start as Employee. Only an Admin can change roles.</p>
-    <div id="authMessage"></div>
+    <div class="tabs"><button id="loginTab" class="active" type="button">Sign in</button><button id="signupTab" type="button">Sign up</button></div>
+    <form id="loginForm" class="grid"><label>Email<input id="loginEmail" type="email" required /></label><label>Password<input id="loginPassword" type="password" minlength="8" required /></label><div><button type="submit">Sign in</button></div></form>
+    <form id="signupForm" class="grid hidden"><label>Full name<input id="signupName" required /></label><label>Email<input id="signupEmail" type="email" required /></label><label>Password<input id="signupPassword" type="password" minlength="8" required /></label><label>Confirm password<input id="signupConfirm" type="password" minlength="8" required /></label><div><button type="submit">Create account</button></div></form>
+    <p class="muted">New accounts start as Employee. Only an Admin can change roles.</p><div id="authMessage"></div>
   </section>
-
   <section id="app" class="hidden">
-    <div class="card row between">
-      <div><strong id="welcome"></strong> <span id="roleBadge" class="badge"></span></div>
-      <button id="logoutBtn" class="danger">Sign out</button>
-    </div>
-
-    <section class="card">
-      <h2>Log work</h2>
-      <form id="entryForm">
-        <div class="grid">
-          <label>Work date<input id="workDate" type="date" required /></label><span></span>
-          <label>Start time<input id="startTime" type="time" required /></label>
-          <label>End time<input id="endTime" type="time" required /></label>
-        </div>
-        <label style="margin-top:14px">Work description<textarea id="description" maxlength="1200" required placeholder="What did you work on?"></textarea></label>
-        <div class="row" style="margin-top:14px"><button type="submit">Save entry</button><span id="entryMessage"></span></div>
-      </form>
-    </section>
-
-    <section class="card">
-      <div class="row between">
-        <div><h2 style="margin-bottom:4px">Timesheet report</h2><span class="muted">Preview and export use the same filters.</span></div>
-        <button id="exportBtn" class="secondary">Export filtered CSV</button>
-      </div>
-
-      <div class="filters">
-        <label>From<input id="filterFrom" type="date" /></label>
-        <label>To<input id="filterTo" type="date" /></label>
-        <label id="employeeFilterLabel">Employee<select id="filterEmployee"></select></label>
-        <button id="clearFiltersBtn" type="button" class="ghost">Clear filters</button>
-      </div>
-
-      <div class="summary-grid">
-        <div class="summary-card"><span class="muted">Total hours</span><strong id="summaryTotal">0:00</strong></div>
-        <div class="summary-card"><span class="muted">Entries</span><strong id="summaryEntries">0</strong></div>
-        <div class="summary-card"><span class="muted">People</span><strong id="summaryPeople">0</strong></div>
-      </div>
-
-      <div class="scroll"><table><thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Duration</th><th>Description</th></tr></thead><tbody id="entriesBody"></tbody></table></div>
-    </section>
-
-    <section id="adminPanel" class="card hidden">
-      <h2>User access</h2>
-      <p class="muted">Admins can promote or demote users. Managers can view reports but cannot change access.</p>
-      <div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody id="usersBody"></tbody></table></div>
-    </section>
+    <div class="card row between"><div><strong id="welcome"></strong> <span id="roleBadge" class="badge"></span></div><button id="logoutBtn" class="danger">Sign out</button></div>
+    <section class="card"><h2>Log work</h2><form id="entryForm"><div class="grid"><label>Work date<input id="workDate" type="date" required /></label><span></span><label>Start time<input id="startTime" type="time" required /></label><label>End time<input id="endTime" type="time" required /></label></div><label style="margin-top:14px">Work description<textarea id="description" maxlength="1200" required></textarea></label><div class="row" style="margin-top:14px"><button type="submit">Save entry</button><span id="entryMessage"></span></div></form></section>
+    <section class="card"><div class="row between"><div><h2 style="margin-bottom:4px">Timesheet report</h2><span class="muted">Preview and export use the same filters.</span></div><button id="exportBtn" class="secondary">Export filtered CSV</button></div><div class="filters"><label>From<input id="filterFrom" type="date" /></label><label>To<input id="filterTo" type="date" /></label><label id="employeeFilterLabel">Employee<select id="filterEmployee"></select></label><button id="clearFiltersBtn" type="button" class="ghost">Clear filters</button></div><div class="summary-grid"><div class="summary-card"><span class="muted">Total hours</span><strong id="summaryTotal">0:00</strong></div><div class="summary-card"><span class="muted">Entries</span><strong id="summaryEntries">0</strong></div><div class="summary-card"><span class="muted">People</span><strong id="summaryPeople">0</strong></div></div><div class="scroll"><table><thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Duration</th><th>Description</th></tr></thead><tbody id="entriesBody"></tbody></table></div></section>
+    <section id="adminPanel" class="card hidden"><h2>User access</h2><p class="muted">Admins can promote or demote users. Managers can view reports but cannot change access.</p><div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody id="usersBody"></tbody></table></div></section>
   </section>
 </main>
 <script>
-  const users = [
-    {id:'u1',name:'LinkoTech Admin',email:'admin@linkotech.com',role:'admin'},
-    {id:'u2',name:'Maya Chen',email:'maya@linkotech.com',role:'manager'},
-    {id:'u3',name:'Alex Morgan',email:'alex@linkotech.com',role:'member'}
-  ];
-  let entries = [
-    {id:'e1',userId:'u3',workDate:'2026-07-24',start:'09:00',end:'12:30',minutes:210,description:'Customer discovery interviews'},
-    {id:'e2',userId:'u2',workDate:'2026-07-24',start:'10:00',end:'15:00',minutes:300,description:'Reviewed onboarding workflow'},
-    {id:'e3',userId:'u3',workDate:'2026-07-23',start:'13:00',end:'17:15',minutes:255,description:'Prepared discovery notes and follow-up actions'}
-  ];
-  let currentUser = null;
-  const $ = id => document.getElementById(id);
-  const showMessage=(el,text,ok=false)=>{el.textContent=text;el.className=ok?'success':'error'};
-  const setAuthMode=mode=>{const login=mode==='login';$('loginForm').classList.toggle('hidden',!login);$('signupForm').classList.toggle('hidden',login);$('loginTab').classList.toggle('active',login);$('signupTab').classList.toggle('active',!login);$('authMessage').textContent=''};
-  const minutesBetween=(s,e)=>{const [sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);return eh*60+em-(sh*60+sm)};
-  const formatDuration=m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;
-  const escapeHtml=v=>{const d=document.createElement('div');d.textContent=v??'';return d.innerHTML};
-
-  $('workDate').valueAsDate=new Date();
-  $('loginTab').onclick=()=>setAuthMode('login');
-  $('signupTab').onclick=()=>setAuthMode('signup');
-  $('logoutBtn').onclick=()=>{currentUser=null;location.reload()};
-  $('filterFrom').onchange=renderEntries;
-  $('filterTo').onchange=renderEntries;
-  $('filterEmployee').onchange=renderEntries;
-  $('clearFiltersBtn').onclick=()=>{$('filterFrom').value='';$('filterTo').value='';$('filterEmployee').value='all';renderEntries()};
-
-  function demoLogin(role){ currentUser=users.find(u=>u.role===role); boot(); }
-
-  $('loginForm').onsubmit=e=>{e.preventDefault();const email=$('loginEmail').value.trim().toLowerCase();currentUser=users.find(u=>u.email===email)||users[2];boot()};
-  $('signupForm').onsubmit=e=>{e.preventDefault();if($('signupPassword').value!==$('signupConfirm').value)return showMessage($('authMessage'),'Passwords do not match.');const email=$('signupEmail').value.trim().toLowerCase();if(users.some(u=>u.email===email))return showMessage($('authMessage'),'This email is already registered.');currentUser={id:`u${Date.now()}`,name:$('signupName').value.trim(),email,role:'member'};users.push(currentUser);showMessage($('authMessage'),'Account created as Employee.',true);boot()};
-
-  $('entryForm').onsubmit=e=>{e.preventDefault();const start=$('startTime').value,end=$('endTime').value,minutes=minutesBetween(start,end);if(minutes<=0)return showMessage($('entryMessage'),'End time must be after start time.');entries.unshift({id:`e${Date.now()}`,userId:currentUser.id,workDate:$('workDate').value,start,end,minutes,description:$('description').value.trim()});$('description').value='';showMessage($('entryMessage'),'Saved.',true);renderEntries()};
-
-  $('exportBtn').onclick=()=>{const visible=getFilteredEntries();const rows=[['employee','email','date','start','end','duration_minutes','description'],...visible.map(x=>{const u=users.find(v=>v.id===x.userId)||{};return[u.name,u.email,x.workDate,x.start,x.end,x.minutes,x.description]})];const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download=`linkotech-timesheet-${$('filterFrom').value||'all'}-to-${$('filterTo').value||'all'}.csv`;a.click();URL.revokeObjectURL(url)};
-
-  function boot(){
-    $('authCard').classList.add('hidden');$('app').classList.remove('hidden');
-    $('welcome').textContent=`Welcome, ${currentUser.name}`;
-    $('roleBadge').textContent=currentUser.role==='member'?'Employee':currentUser.role[0].toUpperCase()+currentUser.role.slice(1);
-    $('adminPanel').classList.toggle('hidden',currentUser.role!=='admin');
-    setupEmployeeFilter();renderEntries();renderUsers();
-  }
-
-  function setupEmployeeFilter(){
-    const canSeeAll=currentUser.role!=='member';
-    $('employeeFilterLabel').classList.toggle('hidden',!canSeeAll);
-    $('filterEmployee').innerHTML='<option value="all">All employees</option>'+users.map(u=>`<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('');
-    $('filterEmployee').value=canSeeAll?'all':currentUser.id;
-  }
-
-  function getVisibleEntries(){return currentUser.role==='member'?entries.filter(x=>x.userId===currentUser.id):entries}
-
-  function getFilteredEntries(){
-    const from=$('filterFrom').value,to=$('filterTo').value,employee=$('filterEmployee').value;
-    return getVisibleEntries().filter(x=>(!from||x.workDate>=from)&&(!to||x.workDate<=to)&&(!employee||employee==='all'||x.userId===employee));
-  }
-
-  function renderEntries(){
-    const visible=getFilteredEntries();
-    $('entriesBody').innerHTML=visible.map(x=>{const u=users.find(v=>v.id===x.userId)||{};return`<tr><td>${escapeHtml(u.name)}</td><td>${x.workDate}</td><td>${x.start}</td><td>${x.end}</td><td>${formatDuration(x.minutes)}</td><td>${escapeHtml(x.description)}</td></tr>`}).join('')||'<tr><td colspan="6" class="muted">No entries match these filters.</td></tr>';
-    $('summaryTotal').textContent=formatDuration(visible.reduce((s,x)=>s+x.minutes,0));
-    $('summaryEntries').textContent=visible.length;
-    $('summaryPeople').textContent=new Set(visible.map(x=>x.userId)).size;
-  }
-
-  function renderUsers(){if(currentUser.role!=='admin')return;$('usersBody').innerHTML=users.map(u=>`<tr><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td><td><select onchange="changeRole('${u.id}',this.value)" ${u.email==='admin@linkotech.com'?'disabled':''}><option value="member" ${u.role==='member'?'selected':''}>Employee</option><option value="manager" ${u.role==='manager'?'selected':''}>Manager</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option></select></td></tr>`).join('')}
-  function changeRole(id,role){const user=users.find(u=>u.id===id);if(user)user.role=role;renderUsers();setupEmployeeFilter();renderEntries()}
+let sb,currentUser,currentProfile,profiles=[],entries=[];const $=id=>document.getElementById(id);const msg=(el,t,ok=false)=>{el.textContent=t;el.className=ok?'success':'error'};const esc=v=>{const d=document.createElement('div');d.textContent=v??'';return d.innerHTML};const duration=m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;const mins=(s,e)=>{const[a,b]=s.split(':').map(Number),[c,d]=e.split(':').map(Number);return c*60+d-(a*60+b)};
+$('workDate').valueAsDate=new Date();$('loginTab').onclick=()=>setMode(true);$('signupTab').onclick=()=>setMode(false);$('filterFrom').onchange=renderEntries;$('filterTo').onchange=renderEntries;$('filterEmployee').onchange=renderEntries;$('clearFiltersBtn').onclick=()=>{$('filterFrom').value='';$('filterTo').value='';$('filterEmployee').value='all';renderEntries()};
+function setMode(login){$('loginForm').classList.toggle('hidden',!login);$('signupForm').classList.toggle('hidden',login);$('loginTab').classList.toggle('active',login);$('signupTab').classList.toggle('active',!login);$('authMessage').textContent=''}
+async function init(){try{const r=await fetch('/api/config',{cache:'no-store'});const c=await r.json();if(!r.ok)throw new Error(c.error||'Configuration failed');sb=supabase.createClient(c.url,c.anonKey);const{data:{session}}=await sb.auth.getSession();$('loadingCard').classList.add('hidden');if(session)await boot(session.user);else $('authCard').classList.remove('hidden')}catch(e){$('loadingCard').innerHTML=`<h1>Configuration error</h1><p class="error">${esc(e.message)}</p>`}}
+$('loginForm').onsubmit=async e=>{e.preventDefault();msg($('authMessage'),'Signing in…',true);const{data,error}=await sb.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error)return msg($('authMessage'),error.message);await boot(data.user)};
+$('signupForm').onsubmit=async e=>{e.preventDefault();if($('signupPassword').value!==$('signupConfirm').value)return msg($('authMessage'),'Passwords do not match.');const{data,error}=await sb.auth.signUp({email:$('signupEmail').value.trim(),password:$('signupPassword').value,options:{data:{full_name:$('signupName').value.trim()}}});if(error)return msg($('authMessage'),error.message);if(data.session)await boot(data.user);else msg($('authMessage'),'Account created. Check your email if confirmation is enabled.',true)};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload()};
+$('entryForm').onsubmit=async e=>{e.preventDefault();const start=$('startTime').value,end=$('endTime').value,m=mins(start,end);if(m<=0)return msg($('entryMessage'),'End time must be after start time.');const{error}=await sb.from('time_entries').insert({user_id:currentUser.id,work_date:$('workDate').value,start_time:start,end_time:end,duration_minutes:m,description:$('description').value.trim()});if(error)return msg($('entryMessage'),error.message);$('description').value='';msg($('entryMessage'),'Saved.',true);await loadData()};
+async function boot(user){currentUser=user;const{data,error}=await sb.from('profiles').select('id,full_name,email,role').eq('id',user.id).single();if(error)return msg($('authMessage'),'Profile not found. Refresh and try again.');currentProfile=data;$('authCard').classList.add('hidden');$('app').classList.remove('hidden');$('welcome').textContent=`Welcome, ${data.full_name}`;$('roleBadge').textContent=data.role==='member'?'Employee':data.role[0].toUpperCase()+data.role.slice(1);$('adminPanel').classList.toggle('hidden',data.role!=='admin');await loadData()}
+async function loadData(){const canSeeAll=currentProfile.role!=='member';let p=[currentProfile];if(canSeeAll){const r=await sb.from('profiles').select('id,full_name,email,role').order('full_name');if(!r.error)p=r.data}profiles=p;const r=await sb.from('time_entries').select('id,user_id,work_date,start_time,end_time,duration_minutes,description').order('work_date',{ascending:false}).order('start_time',{ascending:false});if(r.error)return alert(r.error.message);entries=r.data||[];setupFilter();renderEntries();renderUsers()}
+function setupFilter(){const all=currentProfile.role!=='member';$('employeeFilterLabel').classList.toggle('hidden',!all);$('filterEmployee').innerHTML='<option value="all">All employees</option>'+profiles.map(p=>`<option value="${p.id}">${esc(p.full_name)}</option>`).join('');$('filterEmployee').value=all?'all':currentProfile.id}
+function filtered(){const f=$('filterFrom').value,t=$('filterTo').value,e=$('filterEmployee').value;return entries.filter(x=>(!f||x.work_date>=f)&&(!t||x.work_date<=t)&&(!e||e==='all'||x.user_id===e))}
+function renderEntries(){const v=filtered();$('entriesBody').innerHTML=v.map(x=>{const p=profiles.find(y=>y.id===x.user_id)||currentProfile;return`<tr><td>${esc(p?.full_name||'')}</td><td>${x.work_date}</td><td>${x.start_time.slice(0,5)}</td><td>${x.end_time.slice(0,5)}</td><td>${duration(x.duration_minutes)}</td><td>${esc(x.description)}</td></tr>`}).join('')||'<tr><td colspan="6" class="muted">No entries match these filters.</td></tr>';$('summaryTotal').textContent=duration(v.reduce((s,x)=>s+x.duration_minutes,0));$('summaryEntries').textContent=v.length;$('summaryPeople').textContent=new Set(v.map(x=>x.user_id)).size}
+function renderUsers(){if(currentProfile.role!=='admin')return;$('usersBody').innerHTML=profiles.map(p=>`<tr><td>${esc(p.full_name)}</td><td>${esc(p.email)}</td><td><select onchange="changeRole('${p.id}',this.value)" ${p.email==='admin@linkotech.com'?'disabled':''}><option value="member" ${p.role==='member'?'selected':''}>Employee</option><option value="manager" ${p.role==='manager'?'selected':''}>Manager</option><option value="admin" ${p.role==='admin'?'selected':''}>Admin</option></select></td></tr>`).join('')}
+async function changeRole(id,role){const{error}=await sb.from('profiles').update({role}).eq('id',id);if(error)return alert(error.message);await loadData()}
+$('exportBtn').onclick=()=>{const v=filtered(),rows=[['employee','email','date','start','end','duration_minutes','description'],...v.map(x=>{const p=profiles.find(y=>y.id===x.user_id)||{};return[p.full_name,p.email,x.work_date,x.start_time,x.end_time,x.duration_minutes,x.description]})],csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a=document.createElement('a');a.href=url;a.download='linkotech-timesheet.csv';a.click();URL.revokeObjectURL(url)};
+init();
 </script>
 </body>
 </html>
