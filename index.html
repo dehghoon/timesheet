@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Timesheet</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #172033; background: #f6f7fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .wrap { width: min(980px, 92vw); margin: 40px auto; }
+    .card { background: white; border: 1px solid #e6e8ef; border-radius: 16px; padding: 20px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(20,30,55,.06); }
+    h1,h2 { margin-top: 0; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    label { display: grid; gap: 7px; font-weight: 600; }
+    input, textarea, button { font: inherit; }
+    input, textarea { width: 100%; border: 1px solid #cfd5e2; border-radius: 10px; padding: 11px 12px; background: #fff; }
+    textarea { min-height: 100px; resize: vertical; }
+    button { border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; background: #1f5eff; color: white; font-weight: 700; }
+    button.secondary { background: #eef2ff; color: #2446a8; }
+    button.danger { background: #fff0f0; color: #b42318; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .between { justify-content:space-between; }
+    .muted { color:#667085; }
+    .hidden { display:none !important; }
+    .error { color:#b42318; margin-top:10px; }
+    .success { color:#067647; margin-top:10px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:10px; border-bottom:1px solid #eceff4; text-align:right; vertical-align:top; }
+    .scroll { overflow:auto; }
+    .badge { background:#eef2ff; color:#2949a7; border-radius:999px; padding:4px 9px; font-size:.85rem; }
+    @media (max-width: 680px) { .grid { grid-template-columns:1fr; } .wrap { margin:20px auto; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section id="loginCard" class="card">
+      <h1>ورود به تایم‌شیت</h1>
+      <p class="muted">نام کاربری و رمز عبور خود را وارد کنید.</p>
+      <form id="loginForm" class="grid">
+        <label>نام کاربری<input id="username" autocomplete="username" required /></label>
+        <label>رمز عبور<input id="password" type="password" autocomplete="current-password" required /></label>
+        <div><button type="submit">ورود</button></div>
+      </form>
+      <div id="loginMessage"></div>
+    </section>
+
+    <section id="app" class="hidden">
+      <div class="card row between">
+        <div><strong id="welcome"></strong> <span id="roleBadge" class="badge"></span></div>
+        <button id="logoutBtn" class="danger">خروج</button>
+      </div>
+
+      <section class="card">
+        <h2>ثبت ساعت کاری</h2>
+        <form id="entryForm">
+          <div class="grid">
+            <label>تاریخ<input id="workDate" type="date" required /></label>
+            <span></span>
+            <label>ساعت شروع<input id="startTime" type="time" required /></label>
+            <label>ساعت پایان<input id="endTime" type="time" required /></label>
+          </div>
+          <label style="margin-top:14px">شرح کار<textarea id="description" maxlength="1200" required placeholder="دقیقاً چه کاری انجام شد؟"></textarea></label>
+          <div class="row" style="margin-top:14px"><button type="submit">ثبت تایم</button><span id="entryMessage"></span></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="row between">
+          <div><h2 style="margin-bottom:4px">گزارش ساعت‌ها</h2><span id="totalHours" class="muted"></span></div>
+          <button id="exportBtn" class="secondary">خروجی CSV</button>
+        </div>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>کاربر</th><th>تاریخ</th><th>شروع</th><th>پایان</th><th>مدت</th><th>شرح کار</th></tr></thead>
+            <tbody id="entriesBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+<script>
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let currentProfile = null;
+  let currentEntries = [];
+
+  const $ = (id) => document.getElementById(id);
+  const showMessage = (el, text, ok=false) => { el.textContent = text; el.className = ok ? 'success' : 'error'; };
+  const syntheticEmail = (username) => `${username.trim().toLowerCase()}@timesheet.local`;
+  const minutesBetween = (start, end) => {
+    const [sh, sm] = start.split(':').map(Number), [eh, em] = end.split(':').map(Number);
+    return (eh * 60 + em) - (sh * 60 + sm);
+  };
+  const formatDuration = (minutes) => `${Math.floor(minutes/60)}:${String(minutes%60).padStart(2,'0')}`;
+
+  $('workDate').valueAsDate = new Date();
+
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showMessage($('loginMessage'), 'در حال ورود...', true);
+    const { error } = await sb.auth.signInWithPassword({ email: syntheticEmail($('username').value), password: $('password').value });
+    if (error) return showMessage($('loginMessage'), 'نام کاربری یا رمز عبور نادرست است.');
+    await boot();
+  });
+
+  $('logoutBtn').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+
+  $('entryForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const start = $('startTime').value, end = $('endTime').value;
+    const duration = minutesBetween(start, end);
+    if (duration <= 0) return showMessage($('entryMessage'), 'ساعت پایان باید بعد از ساعت شروع باشد.');
+    const { data: { user } } = await sb.auth.getUser();
+    const { error } = await sb.from('time_entries').insert({
+      user_id: user.id,
+      work_date: $('workDate').value,
+      start_time: start,
+      end_time: end,
+      duration_minutes: duration,
+      description: $('description').value.trim()
+    });
+    if (error) return showMessage($('entryMessage'), error.message);
+    showMessage($('entryMessage'), 'ثبت شد.', true);
+    $('description').value = '';
+    await loadEntries();
+  });
+
+  $('exportBtn').addEventListener('click', () => {
+    const rows = [['username','date','start','end','duration_minutes','description'], ...currentEntries.map(x => [x.profiles?.username || '', x.work_date, x.start_time, x.end_time, x.duration_minutes, x.description])];
+    const csv = rows.map(r => r.map(v => `"${String(v ?? '').replaceAll('"','""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+    const a = document.createElement('a'); a.href = url; a.download = `timesheet-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+  });
+
+  async function boot() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data, error } = await sb.from('profiles').select('username, role').eq('id', user.id).single();
+    if (error) return showMessage($('loginMessage'), 'پروفایل کاربر پیدا نشد.');
+    currentProfile = data;
+    $('welcome').textContent = `سلام ${data.username}`;
+    $('roleBadge').textContent = data.role === 'admin' ? 'مدیر' : 'عضو تیم';
+    $('loginCard').classList.add('hidden'); $('app').classList.remove('hidden');
+    await loadEntries();
+  }
+
+  async function loadEntries() {
+    const { data, error } = await sb.from('time_entries').select('id, work_date, start_time, end_time, duration_minutes, description, profiles(username)').order('work_date', {ascending:false}).order('start_time', {ascending:false});
+    if (error) return alert(error.message);
+    currentEntries = data || [];
+    $('entriesBody').innerHTML = currentEntries.map(x => `<tr><td>${escapeHtml(x.profiles?.username || '')}</td><td>${x.work_date}</td><td>${x.start_time.slice(0,5)}</td><td>${x.end_time.slice(0,5)}</td><td>${formatDuration(x.duration_minutes)}</td><td>${escapeHtml(x.description)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">هنوز رکوردی ثبت نشده.</td></tr>';
+    const total = currentEntries.reduce((sum,x)=>sum+x.duration_minutes,0);
+    $('totalHours').textContent = `مجموع: ${formatDuration(total)} ساعت`;
+  }
+
+  function escapeHtml(value) { const d=document.createElement('div'); d.textContent=value ?? ''; return d.innerHTML; }
+  sb.auth.getSession().then(({data}) => { if (data.session) boot(); });
+</script>
+</body>
+</html>
